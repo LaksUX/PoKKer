@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "Kotta - Poker Manager",
+    "slug": "kotta-poker",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1a1a1a"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.kotta.poker",
+      "buildNumber": "1"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1a1a1a"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.kotta.poker",
+      "versionCode": 1
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#2ecc71"
+        }
+      ]
+    ],
+    "description": "Manage your poker house games - plan events, track buy-ins, cashouts, and chip counts"
+  }
+}

@@ -1,109 +1,241 @@
-# Poker Night
+# Kotta - Poker Night Manager
 
-A mobile-first progressive web app for running house poker nights. Track buy-ins and rebuys, cash players out, and let the app figure out who pays whom at the end of the night.
-
-Built as a PWA (zero build step, no backend). Data lives in your browser's `localStorage`. Works offline once loaded. Drop it on GitHub Pages and it's a one-tap-install app on your phone's home screen.
+A mobile app for poker players to plan house games, manage buy-ins, track cashouts, and monitor chip counts.
 
 ## Features
 
-- **Create a game** with name, date, location, buy-in amount and chip value.
-- **Invite players** via a shareable link that opens a WhatsApp message prefilled with game details.
-- **Live buy-ins and rebuys** — tap a player, type an amount, done.
-- **Cash-outs** — enter a chip count, the app computes the cash value and net position.
-- **Float tracker** — always know how much cash the host should have in hand.
-- **Automatic settlement** — minimum-transaction algorithm. App tells you "Alex pays Jordan £20" and so on.
-- **Game history + per-player P&L** — every finished game is stored locally with net positions.
-- **Leaderboard** — ranked by lifetime P&L across all games, with games played, win rate and biggest win.
-- **Dark-first UI** — designed for dim poker rooms.
-- **Offline** — service worker caches the shell so it works with no signal at the venue.
-- **Install to home screen** — standard PWA install from Safari/Chrome.
+- **Event Planning**: Create poker games with venue, time, and player list
+- **Player Management**: Add/remove players and track attendance
+- **Buy-In Tracking**: Record buy-ins for each player
+- **Cash-Out Management**: Record final cash-outs and calculate profits/losses
+- **Chip Tracking**: Monitor chip counts during the game
+- **Game History**: View past games and statistics
+- **Push Notifications**: Get notifications for upcoming games and important updates
+- **User Authentication**: Secure login and signup with Firebase
 
-## What's not in this build
+## Tech Stack
 
-Everything marked "Won't" in the BRD, plus:
-- Real WhatsApp OTP authentication — onboarding is a simple name + phone stub (no server).
-- Cross-device sync — data is local to the browser. Export/import JSON is available in Profile → Data.
-- Native push notifications, universal/app-link deep linking, PDF export.
+- **Frontend**: React Native with Expo
+- **Backend**: Firebase (Authentication, Firestore Database)
+- **Navigation**: React Navigation
+- **Development Language**: TypeScript
 
-These are the pieces that need a backend. The UX and the on-device logic are all here.
+## Project Structure
 
-## Running it locally
+```
+src/
+├── screens/            # App screens (Home, CreateGame, GameDetail, Auth)
+├── services/           # Firebase and API services
+├── context/            # React Context (Auth)
+├── types/              # TypeScript types and interfaces
+├── utils/              # Utility functions
+├── components/         # Reusable components
+└── assets/             # Images and assets
+```
 
-Any static file server works. For example:
+## Setup Instructions
+
+### 1. Clone and Install Dependencies
 
 ```bash
-python3 -m http.server 8080
-# then open http://localhost:8080
+npm install
 ```
 
-Or with Node:
+### 2. Configure Firebase
+
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Create a new project
+3. Enable Authentication (Email/Password)
+4. Create a Firestore database
+5. Copy your project credentials
+
+### 3. Set Environment Variables
 
 ```bash
-npx serve .
+cp .env.example .env.local
 ```
 
-Service workers require HTTPS or `localhost`, so don't just double-click `index.html` — serve it.
-
-## Hosting on GitHub Pages
-
-1. Push this repo to GitHub (see below).
-2. In the repo's **Settings → Pages**, set the source to **Deploy from a branch**, branch `main`, folder `/ (root)`.
-3. GitHub will publish it at `https://<your-username>.github.io/<repo-name>/` within a minute.
-4. Open that URL on your phone and add it to your home screen.
-
-The `.nojekyll` file is already included so GitHub Pages won't try to treat it as a Jekyll site.
-
-## Project structure
+Update `.env.local` with your Firebase credentials:
 
 ```
-poker-night/
-├── index.html               # app shell + tab bar
-├── styles.css               # dark-first, mobile-first styles
-├── app.js                   # all application logic (state, routing, views, settlement)
-├── manifest.webmanifest     # PWA manifest
-├── sw.js                    # service worker (offline caching)
-├── icon.svg                 # app icon
-├── .nojekyll                # GitHub Pages: skip Jekyll
-├── .gitignore
-└── README.md
+EXPO_PUBLIC_FIREBASE_API_KEY=your_api_key
+EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain
+EXPO_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+EXPO_PUBLIC_FIREBASE_APP_ID=your_app_id
 ```
 
-No build step, no dependencies.
+### 4. Run the App
 
-## Settlement algorithm
+**For Web:**
+```bash
+npm run web
+```
 
-The end-of-night settlement uses a greedy minimum-transaction algorithm:
+**For iOS (macOS only):**
+```bash
+npm run ios
+```
 
-1. Compute each player's net position (cash-out − buy-in).
-2. Sort creditors (net > 0) and debtors (net < 0).
-3. Repeatedly pair the biggest creditor with the biggest debtor and transfer `min(|debt|, credit)` between them, until both are zero.
+**For Android:**
+```bash
+npm run android
+```
 
-This produces a transaction list with at most `n − 1` entries for `n` players and in practice far fewer.
+## Firebase Database Structure
 
-## Data model
+### Collections
 
-Stored in `localStorage` under `pokerNight.v1`:
+1. **games**
+   - Contains all poker game documents
+   - Fields: title, venue, dateTime, players, buyInAmount, status, etc.
 
-```ts
-state = {
-  me: { id, name, phone, avatar },
-  users: { [id]: { id, name, phone, avatar } },
-  games: {
-    [id]: {
-      id, name, date, location,
-      buyIn, chipValue, startingFloat,
-      hostId, status: 'draft' | 'active' | 'ended',
-      createdAt, startedAt, endedAt,
-      players: { [userId]: { userId, buyIns:[...], cashOuts:[...], status } },
-      playerOrder: [userId],
-      settlement: { tx: [{ from, to, amount, paid }], generatedAt },
-      inviteToken,
-    }
-  },
-  currency: '£',
+2. **buyIns**
+   - Records of player buy-ins
+   - Fields: gameId, playerId, amount, timestamp
+
+3. **cashOuts**
+   - Records of player cash-outs and profits
+   - Fields: gameId, playerId, amount, profit, timestamp
+
+4. **users**
+   - User profiles
+   - Fields: displayName, email, avatar, stats
+
+## Usage
+
+### Creating a Game
+
+1. Tap "New Game" on the home screen
+2. Fill in game details (title, venue, buy-in amount, date/time)
+3. Add description (optional)
+4. Tap "Create Game"
+
+### Managing Players
+
+1. Go to game details
+2. Tap "Players" tab
+3. Add players by email (if you're the host)
+
+### Recording Transactions
+
+1. Go to game details
+2. For buy-ins: Tap "Buy-Ins" tab → Select player → Enter amount
+3. For cash-outs: Tap "Cash-Out" tab → Select player → Enter final amount (profit/loss calculated automatically)
+
+## API Reference
+
+### Game Service
+
+```typescript
+// Create game
+gameService.createGame(gameData: Omit<Game, 'id' | 'createdAt' | 'updatedAt'>): Promise<string>
+
+// Get game
+gameService.getGame(gameId: string): Promise<Game | null>
+
+// Get user's games
+gameService.getUserGames(userId: string): Promise<Game[]>
+
+// Update game
+gameService.updateGame(gameId: string, updates: Partial<Game>): Promise<void>
+
+// Delete game
+gameService.deleteGame(gameId: string): Promise<void>
+
+// Add buy-in
+gameService.addBuyIn(buyIn: BuyInEntry): Promise<void>
+
+// Get game buy-ins
+gameService.getGameBuyIns(gameId: string): Promise<BuyInEntry[]>
+
+// Add cash-out
+gameService.addCashOut(cashOut: CashOutEntry): Promise<void>
+
+// Get game cash-outs
+gameService.getGameCashOuts(gameId: string): Promise<CashOutEntry[]>
+```
+
+## Key Types
+
+```typescript
+interface Game {
+  id: string;
+  hostId: string;
+  title: string;
+  venue: string;
+  dateTime: Date;
+  players: Player[];
+  buyInAmount: number;
+  status: 'scheduled' | 'in-progress' | 'completed' | 'cancelled';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface Player {
+  id: string;
+  name: string;
+  email: string;
+}
+
+interface BuyInEntry {
+  gameId: string;
+  playerId: string;
+  amount: number;
+  timestamp: Date;
+}
+
+interface CashOutEntry {
+  gameId: string;
+  playerId: string;
+  amount: number;
+  profit: number;
+  timestamp: Date;
 }
 ```
 
+## Future Enhancements
+
+- [ ] Game statistics and player rankings
+- [ ] Chip stack visualization
+- [ ] In-game timer (for tournament mode)
+- [ ] Multiple game formats (cash, tournament, SNG)
+- [ ] Leaderboards and player stats
+- [ ] Social features (friend list, game invitations)
+- [ ] Photo profiles
+- [ ] Game replay/hand history
+- [ ] Payout settlement calculator
+- [ ] Dark/Light theme toggle
+
+## Troubleshooting
+
+### Firebase Connection Issues
+- Verify your Firebase credentials are correct
+- Check that Firestore Security Rules allow read/write access
+- Ensure your Firebase project has authentication enabled
+
+### Build Errors
+- Run `npm install` again to ensure all dependencies are installed
+- Clear cache: `npx expo start --clear`
+- Update Expo: `npm install -g expo-cli@latest`
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
 ## License
 
-MIT. Built from a BRD; see the BRD for product intent.
+MIT License - See LICENSE file for details
+
+## Support
+
+For issues and feature requests, please open an issue on GitHub.
+
+---
+
+**Happy Poker!** ♠♥♦♣
